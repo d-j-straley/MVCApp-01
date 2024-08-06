@@ -6,6 +6,10 @@ using System.Text.Json;
 
 namespace MVCApp.Controllers
 {
+    // This route attribute is used to define the route for the controller.
+    // In this case it's kind of a goofy route name, but I'm doing it just
+    // to show that any route name is legitimate.
+    [Route("Contacting")]
     public class ContactsController : Controller
     {
 
@@ -20,6 +24,19 @@ namespace MVCApp.Controllers
             _contacts = new();
             try
             {
+                // interestingly, MVC/.Net Core does not have a built-in way to store Session state the
+                // way that ASP.Net Framework does,
+                // so we have to use the IHttpContextAccessor to get the Session object.
+                // We are storing the contact list in the Session object.
+                // Also interestingly, we beed to access this Session through the httpContextAccessor
+                // object *initiall* (as shown below) but later in the code we can access it directly
+                // through the HttpContext object. (Not sure why this is the case, but it is, LOL.)
+                // Additionally, we can only store Strings and int's into an MVC Session (don't ask me:
+                // I wasn't invited to the design meetings), so we've come up with a workaround to
+                // store our *objects* and that is by serializing them into JSON strings, and then
+                // storing those strings into Session.  When we want to access the objects we
+                // deserialize the JSON strings back into objects. 
+
                 _contacts = _httpContextAccessor.HttpContext.Session.GetString("Contacts").FromJson<List<Contact>>();
             }
             catch
@@ -32,13 +49,23 @@ namespace MVCApp.Controllers
 
 
         // GET: ContactController
-        [HttpGet]
+        [HttpGet("Index")]
         public ActionResult Index()
         {
             return View(_contacts);
         }
 
-        // GET: ContactController/Details/5
+        // I'm leaving this here purposely (below), just to show how that we can mix and match
+        // traditional routing methodology (in this method) with
+        // attribute routing (done for other action methods).
+        // Note that the URL which is constructed by MVC is different from one methodology
+        // to the other.  Interestingly, is we do *not* specify a route for this method at
+        // the controller level, then the URL constructed by MVC for this action will be the same as the
+        // URL constructed by the attribute routing methodology, i.e. it'll be "Contacting/{id}".
+        // But in this case, since we are specifying a route for the controller,
+        // the URL constructed by MVC for this action will be "Contacting?id={id}".
+        // The end result is the same but there are two different ways to get there, and these
+        // subtle differences in the URLs constructed by MVC are important to understand.
         [HttpGet]
         public ActionResult Details(int? id)
         {
@@ -56,16 +83,14 @@ namespace MVCApp.Controllers
             return View(contact);
         }
 
-        // GET: ContactController/Create
-        [HttpGet]
+        [HttpGet("Create")]
         public ActionResult Create()
         {
             return View();
         }
 
-        // POST: ContactController/Create
 
-        [HttpPost]
+        [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public ActionResult Create(IFormCollection collection)
         {
@@ -87,8 +112,7 @@ namespace MVCApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: ContactController/Edit/5
-        [HttpGet]
+        [HttpGet("Edit/{id}")]
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -105,8 +129,7 @@ namespace MVCApp.Controllers
             return View(contact);
         }
 
-        // POST: ContactController/Edit/5
-        [HttpPost]
+        [HttpPost("Edit/{id}")]
         [ValidateAntiForgeryToken]
         public ActionResult Edit(int id, IFormCollection collection)
         {
@@ -129,8 +152,7 @@ namespace MVCApp.Controllers
             }
         }
 
-        // GET: ContactController/Delete/5
-        [HttpGet]
+        [HttpGet("Delete/{id}")]
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -147,8 +169,7 @@ namespace MVCApp.Controllers
             return View(contact);
         }
 
-        // POST: ContactController/Delete/5
-        [HttpPost]
+        [HttpPost("Delete/{id}")]
         [ValidateAntiForgeryToken]
         public ActionResult Delete(int id)
         {
