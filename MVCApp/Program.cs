@@ -1,3 +1,7 @@
+/*
+© 2024 David James Straley
+*/
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
